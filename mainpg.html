@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <image>IMG_0132.jpeg</image>
+  <title>用戶帳戶系統</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#5D5CDE',
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+    .slide-enter {
+      animation: slideIn 0.3s forwards;
+    }
+    .slide-exit {
+      animation: slideOut 0.3s forwards;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(-20px); }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
+  <div class="min-h-screen flex items-center justify-center px-4 py-16">
+    <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-lg shadow-md p-10 min-h-[600px] transition-colors duration-200 relative overflow-hidden">
+      <!-- Login Form -->
+      <div id="loginSection" class="slide-enter">
+        <div class="text-center mb-4">
+          <h2 class="text-2xl font-bold text-gray-800 dark:text-white">登錄</h2>
+        </div>
+        
+        <form id="loginForm" class="space-y-5">
+          <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600">
+            <div class="mb-2">
+              <label for="importData" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">導入用戶數據</label>
+              <div class="flex space-x-2">
+                <input type="text" id="importDataField" class="flex-grow px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white" placeholder="粘貼數據代碼以恢復帳戶...">
+                <button type="button" id="importDataBtn" class="bg-primary hover:bg-opacity-90 text-white px-3 py-2 text-sm font-medium rounded-md">導入</button>
+              </div>
+              <p id="importMessage" class="mt-1 text-sm text-gray-600 dark:text-gray-400 hidden"></p>
+            </div>
+          </div>
+          
+          <div>
+            <label for="loginUsername" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">用戶名</label>
+            <input type="text" id="loginUsername" class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white" placeholder="請輸入用戶名" required>
+            <p id="loginUsernameError" class="mt-1 text-sm text-red-600 dark:text-red-400 hidden">請輸入用戶名</p>
+          </div>
+          
+          <div>
+            <label for="loginPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">密碼</label>
+            <input type="password" id="loginPassword" class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white" placeholder="請輸入密碼" required>
+            <p id="loginPasswordError" class="mt-1 text-sm text-red-600 dark:text-red-400 hidden">請輸入密碼</p>
+          </div>
+          
+          <button type="submit" id="loginButton" class="w-full bg-primary hover:bg-opacity-90 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200 flex justify-center items-center text-lg">
+            <span>登錄</span>
+            <svg id="loginSpinner" class="ml-2 w-5 h-5 spinner hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </button>
+          
+          <div id="loginMessage" class="text-center text-red-600 dark:text-red-400 text-sm min-h-[20px]"></div>
+          
+          <div class="text-center text-sm text-gray-600 dark:text-gray-400 mb-2">
+            還沒有帳戶? <a href="#" id="showSignup" class="text-primary hover:underline">註冊</a>
+          </div>
+          
+          <div class="flex justify-between text-xs mt-6">
+            <button id="exportData" class="text-primary hover:underline">導出用戶數據</button>
+            <button id="importData" class="text-primary hover:underline">導入用戶數據</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Signup Form -->
+      <div id="signupSection" class="absolute inset-0 p-10 hidden">
+        <div class="text-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-800 dark:text-white">註冊</h2>
+        </div>
+        
+        <form id="signupForm" class="space-y-6">
+          <div>
+            <label for="signupUsername" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">用戶名</label>
+            <input type="text" id="signupUsername" class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white" placeholder="請設置用戶名" required>
+            <p id="signupUsernameError" class="mt-1 text-sm text-red-600 dark:text-red-400 hidden">請輸入有效的用戶名 (至少3個字符)</p>
+          </div>
+          
+          <div>
+            <label for="signupPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">密碼</label>
+            <input type="password" id="signupPassword" class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white" placeholder="請設置密碼" required>
+            <p id="signupPasswordError" class="mt-1 text-sm text-red-600 dark:text-red-400 hidden">請輸入有效的密碼 (至少4個字符)</p>
+          </div>
+          
+          <div>
+            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">確認密碼</label>
+            <input type="password" id="confirmPassword" class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white" placeholder="請再次輸入密碼" required>
+            <p id="confirmPasswordError" class="mt-1 text-sm text-red-600 dark:text-red-400 hidden">密碼不匹配</p>
+          </div>
+          
+          <button type="submit" id="signupButton" class="w-full bg-primary hover:bg-opacity-90 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200 flex justify-center items-center text-lg">
+            <span>註冊</span>
+            <svg id="signupSpinner" class="ml-2 w-5 h-5 spinner hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </button>
+          
+          <div id="signupMessage" class="text-center text-red-600 dark:text-red-400 text-sm min-h-[20px]"></div>
+          
+          <div class="text-center text-sm text-gray-600 dark:text-gray-400">
+            已有帳戶? <a href="#" id="showLogin" class="text-primary hover:underline">登錄</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for import/export -->
+  <div id="dataModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 id="modalTitle" class="text-lg font-bold mb-4 text-gray-800 dark:text-white"></h3>
+      
+      <div id="exportView" class="hidden">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">複製下面的代碼，保存在安全的地方。您可以使用它來恢復您的帳戶數據:</p>
+        <div class="relative">
+          <textarea id="exportTextarea" class="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white h-28" readonly></textarea>
+          <button id="copyExportData" class="absolute right-2 top-2 bg-primary text-white px-2 py-1 text-xs rounded">
+            複製
+          </button>
+        </div>
+        <p id="copyMessage" class="text-green-500 text-xs mt-1 hidden">已複製!</p>
+      </div>
+      
+      <div id="importView" class="hidden">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">粘貼您之前導出的數據代碼:</p>
+        <textarea id="importTextarea" class="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white h-28" placeholder="在此粘貼您的數據代碼..."></textarea>
+        <p id="importError" class="text-red-500 text-xs mt-1 hidden">無效的數據格式</p>
+      </div>
+      
+      <div class="flex justify-end mt-4 space-x-2">
+        <button id="dataModalCancel" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+          取消
+        </button>
+        <button id="dataModalConfirm" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-opacity-90">
+          確定
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Dark mode detection
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark');
+    }
+    
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+      if (event.matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    });
+
+    // Get DOM elements
+    // Login elements
+    const loginSection = document.getElementById('loginSection');
+    const loginForm = document.getElementById('loginForm');
+    const loginUsername = document.getElementById('loginUsername');
+    const loginPassword = document.getElementById('loginPassword');
+    const loginUsernameError = document.getElementById('loginUsernameError');
+    const loginPasswordError = document.getElementById('loginPasswordError');
+    const loginMessage = document.getElementById('loginMessage');
+    const loginButton = document.getElementById('loginButton');
+    const loginSpinner = document.getElementById('loginSpinner');
+    const showSignupLink = document.getElementById('showSignup');
+
+    // Signup elements
+    const signupSection = document.getElementById('signupSection');
+    const signupForm = document.getElementById('signupForm');
+    const signupUsername = document.getElementById('signupUsername');
+    const signupPassword = document.getElementById('signupPassword');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const signupUsernameError = document.getElementById('signupUsernameError');
+    const signupPasswordError = document.getElementById('signupPasswordError');
+    const confirmPasswordError = document.getElementById('confirmPasswordError');
+    const signupMessage = document.getElementById('signupMessage');
+    const signupButton = document.getElementById('signupButton');
+    const signupSpinner = document.getElementById('signupSpinner');
+    const showLoginLink = document.getElementById('showLogin');
+
+    // Default account and session storage for users
+    // We'll use a variable to store users during the session since localStorage may not be reliable in iframe
+    const defaultAccounts = [
+      { username: 'testp1', password: '0000' }
+    ];
+    
+    // Session-based user storage
+    let sessionUsers = [...defaultAccounts];
+    
+    // Try to use localStorage if available, but have a fallback
+    try {
+      // Try to initialize localStorage if it's available
+      const storedUsers = localStorage.getItem('users');
+      if (storedUsers) {
+        sessionUsers = JSON.parse(storedUsers);
+        // Ensure default account always exists
+        if (!sessionUsers.some(u => u.username === 'testp1' && u.password === '0000')) {
+          sessionUsers.push({ username: 'testp1', password: '0000' });
+        }
+      } else {
+        // Initialize localStorage if it's empty and available
+        localStorage.setItem('users', JSON.stringify(sessionUsers));
+      }
+    } catch (error) {
+      console.error('LocalStorage error:', error);
+      // Continue with sessionUsers as fallback
+    }
+
+    // Function to get users - works regardless of localStorage availability
+    function getUsers() {
+      return sessionUsers;
+    }
+
+    // Function to save a new user
+    function saveUser(username, password) {
+      try {
+        // Add to our session variable
+        sessionUsers.push({ username, password });
+        
+        // Try to save to localStorage as well, but don't depend on it
+        try {
+          localStorage.setItem('users', JSON.stringify(sessionUsers));
+        } catch (e) {
+          console.error('Could not save to localStorage:', e);
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('Error saving user:', error);
+        return false;
+      }
+    }
+
+    // Function to check if a username already exists
+    function usernameExists(username) {
+      const users = getUsers();
+      return users.some(user => user.username.toLowerCase() === username.toLowerCase());
+    }
+    
+    // Import/Export functionality
+    const exportDataBtn = document.getElementById('exportData');
+    const importDataBtn = document.getElementById('importData');
+    const dataModal = document.getElementById('dataModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const exportView = document.getElementById('exportView');
+    const importView = document.getElementById('importView');
+    const exportTextarea = document.getElementById('exportTextarea');
+    const importTextarea = document.getElementById('importTextarea');
+    const copyExportDataBtn = document.getElementById('copyExportData');
+    const copyMessage = document.getElementById('copyMessage');
+    const importError = document.getElementById('importError');
+    const dataModalCancel = document.getElementById('dataModalCancel');
+    const dataModalConfirm = document.getElementById('dataModalConfirm');
+    
+    // Show export modal
+    exportDataBtn.addEventListener('click', function(event) {
+      event.preventDefault();
+      
+      // Create an export string from the current users
+      // We'll use base64 encoding to make it easier to copy/paste
+      const exportData = btoa(JSON.stringify(sessionUsers));
+      exportTextarea.value = exportData;
+      
+      // Set up the modal for export
+      modalTitle.textContent = '導出用戶數據';
+      exportView.classList.remove('hidden');
+      importView.classList.add('hidden');
+      copyMessage.classList.add('hidden');
+      dataModalConfirm.textContent = '關閉';
+      
+      // Show the modal
+      dataModal.classList.remove('hidden');
+    });
+    
+    // Show import modal
+    importDataBtn.addEventListener('click', function(event) {
+      event.preventDefault();
+      
+      // Set up the modal for import
+      modalTitle.textContent = '導入用戶數據';
+      exportView.classList.add('hidden');
+      importView.classList.remove('hidden');
+      importError.classList.add('hidden');
+      importTextarea.value = '';
+      dataModalConfirm.textContent = '導入數據';
+      
+      // Show the modal
+      dataModal.classList.remove('hidden');
+    });
+    
+    // Handle copy button
+    copyExportDataBtn.addEventListener('click', function() {
+      // Copy the export data to clipboard
+      exportTextarea.select();
+      document.execCommand('copy');
+      
+      // Show copied message
+      copyMessage.classList.remove('hidden');
+      
+      // Hide after 3 seconds
+      setTimeout(() => {
+        copyMessage.classList.add('hidden');
+      }, 3000);
+    });
+    
+    // Handle modal cancel
+    dataModalCancel.addEventListener('click', function() {
+      dataModal.classList.add('hidden');
+    });
+    
+    // Handle modal confirm (either close for export or import for import)
+    dataModalConfirm.addEventListener('click', function() {
+      if (exportView.classList.contains('hidden')) {
+        // We're in import mode
+        try {
+          const importData = importTextarea.value.trim();
+          if (!importData) {
+            importError.textContent = '請輸入數據代碼';
+            importError.classList.remove('hidden');
+            return;
+          }
+          
+          // Decode and parse the import data
+          const decodedData = JSON.parse(atob(importData));
+          
+          // Validate the data structure
+          if (!Array.isArray(decodedData) || !decodedData.every(item => 
+            typeof item === 'object' && 
+            'username' in item && 
+            'password' in item
+          )) {
+            throw new Error('Invalid data format');
+          }
+          
+          // Add the default account if it doesn't exist
+          if (!decodedData.some(u => u.username === 'testp1' && u.password === '0000')) {
+            decodedData.push({ username: 'testp1', password: '0000' });
+          }
+          
+          // Update our session users
+          sessionUsers = decodedData;
+          
+          // Try to save to localStorage as well
+          try {
+            localStorage.setItem('users', JSON.stringify(sessionUsers));
+          } catch (e) {
+            console.error('Could not save to localStorage:', e);
+          }
+          
+          // Close the modal
+          dataModal.classList.add('hidden');
+          
+          // Show success message
+          loginMessage.textContent = "用戶數據已成功導入!";
+          loginMessage.classList.remove('text-red-600', 'dark:text-red-400');
+          loginMessage.classList.add('text-green-600', 'dark:text-green-400');
+          
+        } catch (error) {
+          importError.textContent = '無效的數據格式';
+          importError.classList.remove('hidden');
+          console.error('Import error:', error);
+        }
+      } else {
+        // We're in export mode, just close the modal
+        dataModal.classList.add('hidden');
+      }
+    });
+
+    // Form event listeners
+    loginForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      handleLogin();
+    });
+
+    signupForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      handleSignup();
+    });
+
+    // Switch between login and signup
+    showSignupLink.addEventListener('click', function(event) {
+      event.preventDefault();
+      switchToSignup();
+    });
+
+    showLoginLink.addEventListener('click', function(event) {
+      event.preventDefault();
+      switchToLogin();
+    });
+
+    function switchToSignup() {
+      // Reset any error messages
+      resetLoginForm();
+      
+      // Animate transition
+      loginSection.classList.remove('slide-enter');
+      loginSection.classList.add('slide-exit');
+      
+      setTimeout(() => {
+        loginSection.style.display = 'none';
+        signupSection.style.display = 'block';
+        signupSection.classList.remove('hidden');
+        signupSection.classList.add('slide-enter');
+      }, 300);
+    }
+
+    function switchToLogin() {
+      // Reset any error messages
+      resetSignupForm();
+      
+      // Animate transition
+      signupSection.classList.remove('slide-enter');
+      signupSection.classList.add('slide-exit');
+      
+      setTimeout(() => {
+        signupSection.style.display = 'none';
+        loginSection.style.display = 'block';
+        loginSection.classList.remove('slide-exit');
+        loginSection.classList.add('slide-enter');
+      }, 300);
+    }
+
+    function resetLoginForm() {
+      loginMessage.textContent = '';
+      loginUsernameError.classList.add('hidden');
+      loginPasswordError.classList.add('hidden');
+      loginButton.disabled = false;
+      loginSpinner.classList.add('hidden');
+    }
+
+    function resetSignupForm() {
+      signupMessage.textContent = '';
+      signupUsernameError.classList.add('hidden');
+      signupPasswordError.classList.add('hidden');
+      confirmPasswordError.classList.add('hidden');
+      signupButton.disabled = false;
+      signupSpinner.classList.add('hidden');
+    }
+
+    function handleLogin() {
+      // Reset error messages
+      resetLoginForm();
+      
+      const username = loginUsername.value.trim();
+      const password = loginPassword.value;
+      
+      // Validate inputs
+      let isValid = true;
+      
+      if (!username) {
+        loginUsernameError.classList.remove('hidden');
+        isValid = false;
+      }
+      
+      if (!password) {
+        loginPasswordError.classList.remove('hidden');
+        isValid = false;
+      }
+      
+      if (!isValid) return;
+
+      // Show loading state
+      loginButton.disabled = true;
+      loginSpinner.classList.remove('hidden');
+      
+      // Simulate network request delay
+      setTimeout(() => {
+        // Check credentials against stored users
+        const users = getUsers();
+        const user = users.find(u => 
+          u.username === username && u.password === password
+        );
+        
+        if (user) {
+          loginMessage.textContent = "登錄成功!";
+          loginMessage.classList.remove('text-red-600', 'dark:text-red-400');
+          loginMessage.classList.add('text-green-600', 'dark:text-green-400');
+          
+          // Show success state
+          loginButton.innerHTML = '已登錄成功';
+          loginButton.disabled = true;
+          loginSpinner.classList.add('hidden');
+          
+          // Create redirect button
+          const redirectBtn = document.createElement('button');
+          redirectBtn.className = 'w-full mt-4 bg-primary hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200';
+          redirectBtn.textContent = '點擊進入系統';
+          redirectBtn.onclick = function() {
+            try {
+              window.open("https://www.ctrchk.com/internal_web", "_blank");
+            } catch (err) {
+              console.error("Redirect error:", err);
+              loginMessage.textContent = "無法自動跳轉，請手動訪問 ctrchk.com";
+            }
+          };
+          
+          // Add the button after the message
+          loginMessage.parentNode.insertBefore(redirectBtn, loginMessage.nextSibling);
+        } else {
+          // Show error message
+          loginMessage.textContent = "用戶名或密碼無效。";
+          loginButton.disabled = false;
+          loginSpinner.classList.add('hidden');
+        }
+      }, 1000);
+    }
+
+    function handleSignup() {
+      // Reset error messages
+      resetSignupForm();
+      
+      const username = signupUsername.value.trim();
+      const password = signupPassword.value;
+      const confirmedPassword = confirmPassword.value;
+      
+      // Validate inputs
+      let isValid = true;
+      
+      if (!username || username.length < 3) {
+        signupUsernameError.classList.remove('hidden');
+        isValid = false;
+      }
+      
+      if (!password || password.length < 4) {
+        signupPasswordError.classList.remove('hidden');
+        isValid = false;
+      }
+      
+      if (password !== confirmedPassword) {
+        confirmPasswordError.classList.remove('hidden');
+        isValid = false;
+      }
+      
+      if (!isValid) return;
+
+      // Check if username already exists
+      if (usernameExists(username)) {
+        signupMessage.textContent = "用戶名已存在，請選擇其他用戶名。";
+        return;
+      }
+
+      // Show loading state
+      signupButton.disabled = true;
+      signupSpinner.classList.remove('hidden');
+      
+      // Simulate network request delay
+      setTimeout(() => {
+        // Save the new user
+        const success = saveUser(username, password);
+        
+        if (success) {
+          signupMessage.textContent = "註冊成功！您現在可以登錄了。";
+          signupMessage.classList.remove('text-red-600', 'dark:text-red-400');
+          signupMessage.classList.add('text-green-600', 'dark:text-green-400');
+          
+          // Clear form
+          signupForm.reset();
+          
+          // Switch to login after a short delay
+          setTimeout(() => {
+            switchToLogin();
+            
+            // Auto-fill the login form with the new credentials
+            loginUsername.value = username;
+            loginPassword.value = password;
+            
+            // Show welcome message
+            loginMessage.textContent = "帳戶已創建，請登錄。";
+            loginMessage.classList.remove('text-red-600', 'dark:text-red-400');
+            loginMessage.classList.add('text-green-600', 'dark:text-green-400');
+          }, 1500);
+        } else {
+          signupMessage.textContent = "註冊失敗，請稍後再試。";
+          signupButton.disabled = false;
+          signupSpinner.classList.add('hidden');
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
